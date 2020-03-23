@@ -14,16 +14,30 @@
 #include <a_samp>
 #include <Pawn.RakNet>
 
+/* RPC ID'S */
+new
+	RPC_SetPlayerName = 11,
+	RPC_CreateExplosion = 79,
+	RPC_ToggleWidescreen = 111,
+	RPC_SetGravity = 146,
+	RPC_SetPlayerSkin = 153,
+	RPC_UpdateScoresAndPings = 155
+;
+
+/* PLAYER INFO */
 enum b1g_enum
 {
 	PING,
-	bool:FAKE_PING
+	bool:FAKE_PING,
+	bool:TOGGLE_WIDESCREEN,
+	PLAYER_SKIN[MAX_PLAYERS]
 }
 new B1G_PLAYER[MAX_PLAYERS][b1g_enum];
+new B1G_NAMES[MAX_PLAYERS][MAX_PLAYERS][24];
 
 public OnOutcomingRPC(playerid, rpcid, BitStream:bs)
 {
-	if(rpcid == 155) // UpdateScoresAndPings
+	if(rpcid == RPC_UpdateScoresAndPings)
 	{
 		new 
 			ping,
@@ -83,7 +97,7 @@ stock GetPlayersOnIP(const ip[])
 	return count;
 }
 
-ClearPlayerChat(playerid, ammount = 20)
+stock ClearPlayerChat(playerid, ammount = 20)
 {
 	for(new i = 0; i != ammount; i++) SendClientMessage(playerid, -1, " ");
 	return 1;
@@ -91,7 +105,7 @@ ClearPlayerChat(playerid, ammount = 20)
 
 stock IsPlayerInWater(playerid)
 {
-    new lib[16], anims[32];
+	new lib[16], anims[32];
     GetAnimationName(GetPlayerAnimationIndex(playerid), lib, sizeof(lib), anims, sizeof(anims));
 	if(!isnull(lib) && !strcmp(lib, "SWIM")) return 1;
     switch(GetPlayerAnimationIndex(playerid))
@@ -115,6 +129,114 @@ stock IsPlayerAiming(playerid)
 stock IsPlayerFalling(playerid)
 {
     return (GetPlayerAnimationIndex(playerid) == 1195 || GetPlayerAnimationIndex(playerid) == 1197 || GetPlayerAnimationIndex(playerid) == 1133 || GetPlayerAnimationIndex(playerid) == 1130);
+}
+
+stock SetPlayerGravity(playerid, Float:gravity)
+{
+	if(!IsPlayerConnected(playerid)) return 0;
+
+	new BitStream:bs = BS_New();
+
+	BS_WriteValue(
+		bs_,
+		PR_FLOAT, gravity
+	);
+				
+	BS_RPC(bs, playerid, RPC_SetGravity);
+	BS_Delete(bs);
+	return 1;
+}
+
+stock CreatePlayerExplosion(playerid, Float:X, Float:Y, Float:Z, type, Float:Radius)
+{
+	if(!IsPlayerConnected(playerid)) return 0;
+
+	new BitStream:bs = BS_New();
+
+	BS_WriteValue(
+		bs_,
+		PR_FLOAT, X,
+		PR_FLOAT, Y,
+		PR_FLOAT, Z,
+		PR_UINT16, type,
+		PR_FLOAT, Radius
+	);
+				
+	BS_RPC(bs, playerid, RPC_CreateExplosion);
+	BS_Delete(bs);
+	return 1;
+}
+
+stock TogglePlayerWidescreen(playerid, bool:set)
+{
+	if(!IsPlayerConnected(playerid)) return 0;
+
+	new BitStream:bs = BS_New();
+
+	BS_WriteValue(
+		bs_,
+		PR_BOOL, set
+	);
+
+	B1G_PLAYER[playerid][TOGGLE_WIDESCREEN] = set;
+				
+	BS_RPC(bs, playerid, RPC_ToggleWidescreen);
+	BS_Delete(bs);
+	return 1;
+}
+
+stock IsPlayerWidescreenToggled(playerid)
+{
+	return B1G_PLAYER[playerid][TOGGLE_WIDESCREEN];
+}
+
+stock SetPlayerSkinForPlayer(playerid, target_player, skin)
+{
+	if(!IsPlayerConnected(playerid)) return 0;
+
+	new BitStream:bs = BS_New();
+
+	BS_WriteValue(
+		bs_,
+		PR_UINT16, playerid,
+		PR_UINT32, skin
+	);
+
+	B1G_PLAYER[playerid][PLAYER_SKIN][target_player] = set;
+				
+	BS_RPC(bs, target_player, RPC_SetPlayerSkin);
+	BS_Delete(bs);
+	return 1;
+}
+
+stock GetPlayerSkinForPlayer(playerid, target_player)
+{
+	return B1G_PLAYER[playerid][PLAYER_SKIN][target_player];
+}
+
+stock SetPlayerNameForPlayer(playerid, target_player, const name[])
+{
+	if(!IsPlayerConnected(playerid)) return 0;
+
+	new BitStream:bs = BS_New();
+
+	BS_WriteValue(
+		bs_,
+		PR_UINT16, playerid,
+		PR_UINT8, sizeof(name),
+		PR_STRING, name
+	);
+
+	B1G_NAMES[playerid][PLAYER_NAME][target_player] = name;
+				
+	BS_RPC(bs, target_player, RPC_SetPlayerName);
+	BS_Delete(bs);
+	return 1;
+}
+
+stock GetPlayerNameForPlayer(playerid, target_player)
+{
+	return B1G_NAMES[playerid][PLAYER_NAME][target_player];
 }
 
 /* WEAPONS FUNCTIONS */
