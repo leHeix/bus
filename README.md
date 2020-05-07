@@ -10,5 +10,7 @@ Pawn.RakNet: https://github.com/urShadow/Pawn.RakNet/
 https://github.com/RealAtom/bus/wiki
 
 
-### Discord
-[![Foo](https://discordapp.com/api/guilds/586980198910656521/embed.png?style=banner2)](https://discord.gg/JDm38dX)
+
+Donate (BTC)
+
+`1CMEPuTPtEKRRbPokRp9vTqoJNVNmm1GXt`
