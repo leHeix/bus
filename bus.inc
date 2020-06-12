@@ -15,7 +15,7 @@
 #include <Pawn.RakNet>
 
 /* RPC ID'S */
-new
+static
 	RPC_SetPlayerName = 11,
 	RPC_CreateExplosion = 79,
 	RPC_ToggleWidescreen = 111,
@@ -60,12 +60,27 @@ public OnOutcomingRPC(playerid, rpcid, BitStream:bs)
 			PR_UINT32, ping
 		);
 				
-		BS_RPC(bs_two, playerid, rpcid);
+		PR_SendRPC(bs_two, playerid, rpcid);
 		BS_Delete(bs_two);
+		
 		return 0;
 	}
-	return 1;
+	#if defined B1G_OnOutcomingRPC
+		return B1G_OnOutcomingRPC(playerid, rpcid, BitStream:bs);
+	#else
+		return 1;
+	#endif
 }
+#if defined _ALS_OnOutcomingRPC
+	#undef OnOutcomingRPC
+#else
+	#define _ALS_OnOutcomingRPC
+#endif
+
+#define OnOutcomingRPC B1G_OnOutcomingRPC
+#if defined B1G_OnOutcomingRPC
+	forward B1G_OnOutcomingRPC(playerid, rpcid, BitStream:bs);
+#endif
 
 /* PLAYER FUNCTIONS */
 stock SetPlayerFakePing(playerid, ping)
